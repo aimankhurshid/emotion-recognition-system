@@ -60,3 +60,9 @@ To test the webcam with your new model (or the pre-trained one if you downloaded
 ```bash
 python webcam_demo_ultra.py
 ```
+
+## 6. Antigravity / Project Docs
+
+If you need to see the project plan or tasks on the other laptop, look in the `docs/antigravity/` folder:
+- `docs/antigravity/task.md`: Current task list.
+- `docs/antigravity/implementation_plan.md`: Technical implementation details.
