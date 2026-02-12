@@ -134,6 +134,14 @@ cd training
 python train.py --data_dir ../data --epochs 50 --batch_size 32
 ```
 
+### ☁️ Google Colab Training
+
+We provide a ready-to-use notebook for training on Google Colab (Free or Pro) using your Google Drive for dataset storage.
+
+1. Open `notebooks/colab_training.ipynb` in [Google Colab](https://colab.research.google.com/).
+2. Follow the instructions to mount your Drive and start training.
+
+
 ### Advanced Training Options
 
 ```bash
