@@ -9,8 +9,8 @@ A state-of-the-art emotion recognition system combining **Convolutional Neural N
 ## 🎯 Key Features
 
 - **Hybrid Architecture**: CNN + Dual Attention (Channel + Spatial) + BiLSTM
-- **High Accuracy**: Targeting 85%+ on AffectNet+ dataset
-- **8 Emotion Classes**: Neutral, Happy, Sad, Surprise, Fear, Disgust, Anger, Contempt
+- **High Accuracy**: Targeting 94%+ on RAF-DB dataset
+- **7-8 Emotion Classes**: Neutral, Happy, Sad, Surprise, Fear, Disgust, Anger (optional Contempt)
 - **Real-time Inference**: Webcam-based emotion recognition
 - **Class-weighted Loss**: Handles imbalanced datasets effectively
 - **Comprehensive Evaluation**: Confusion matrix, ROC curves, per-class metrics
@@ -62,7 +62,7 @@ pip install -r requirements.txt
 emotion_recognition_system/
 ├── README.md
 ├── requirements.txt
-├── data/                      # AffectNet+ dataset (download separately)
+├── data/                      # RAF-DB dataset (download separately)
 │   ├── train/
 │   ├── val/
 │   └── test/
@@ -91,20 +91,10 @@ emotion_recognition_system/
 
 ## 📥 Dataset Preparation
 
-### Download AffectNet+ Dataset
+### Download RAF-DB Dataset
 
-1. Visit Kaggle: https://www.kaggle.com/datasets/dollyprajapati182/balanced-affectnet
-2. Download the dataset using Kaggle API:
-
-```bash
-pip install kaggle
-
-# Set up Kaggle credentials (kaggle.json)
-kaggle datasets download -d dollyprajapati182/balanced-affectnet
-
-# Extract to data/ directory
-unzip balanced-affectnet.zip -d data/
-```
+1. Download RAF-DB from the official source or a verified mirror.
+2. Extract the dataset into the `data/` directory.
 
 ### Expected Directory Structure
 
