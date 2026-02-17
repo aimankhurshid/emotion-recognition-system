@@ -36,6 +36,12 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific
+data/
 results/
 demographics/
 *.log
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
