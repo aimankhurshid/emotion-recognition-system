@@ -1,61 +1,49 @@
-# Final Project Roadmap: Beat the 82.13% Baseline
+# Final Project Roadmap: The 82.13% Baseline Challenge
 
-Follow these steps to complete the training on your RTX 5000 Ada laptop using the official AffectNet+ dataset.
-
----
-
-## 🚀 Step 1: Dataset Setup (AffectNet+)
-1.  **Extract:** Ensure your AffectNet+ images are extracted into the `data/` folder.
-2.  **Organize:** Your directory must follow this structure:
-    ```text
-    data/
-    ├── train/
-    │   ├── 0_neutral/ (containing .jpg/.png files)
-    │   ├── ...
-    │   └── 7_contempt/
-    ├── val/
-    └── test/
-    ```
-    *(If you only have one folder, split it 70/15/15 into train/val/test).*
+This project follows a two-phase research strategy to validate the Bi-LSTM novelty before the final high-precision run.
 
 ---
 
-## 💻 Step 2: The Winning Training Command
-To beat the 82.13% baseline, use this highly optimized command on the RTX 5000:
+## 🏎️ Phase 1: Benchmark Run (Lenovo RTX 4060 Laptop)
+**Goal**: Verify model convergence and get preliminary accuracy.
+**Constraint**: 8GB VRAM (Requires lower batch size).
 
-```bash
-python training/train.py \
-  --data_dir data \
-  --epochs 60 \
-  --batch_size 32 \
-  --model_type full \
-  --backbone efficientnet_b4 \
-  --learning_rate 0.0001 \
-  --lstm_hidden 512 \
-  --lstm_layers 2 \
-  --num_workers 8 \
-  --use_class_weights \
-  --checkpoint_dir results/winning_run_affectnet
+```powershell
+python training/train.py `
+  --data_dir data `
+  --epochs 30 `
+  --batch_size 16 `
+  --model_type full `
+  --backbone efficientnet_b4 `
+  --lstm_hidden 512 `
+  --use_class_weights `
+  --checkpoint_dir results/phase1_laptop_benchmark
 ```
 
-### Why this is the "Winner":
-*   **EfficientNet-B4**: Superior feature extraction compared to ResNet.
-*   **LSTM Hidden 512**: Doubled hidden size to capture deeper temporal patterns in AffectNet+ facial features.
-*   **Weighted Loss**: Handles the class imbalance (few 'Contempt' vs many 'Happy' images).
-*   **Num Workers 8**: Takes advantage of the RTX 5000's CPU power for faster data loading.
-
 ---
 
-## 📈 Step 3: Verification
-Once training finishes:
-1.  Run the evaluation: `python training/evaluate.py --checkpoint_path results/winning_run_affectnet/best_model.pth --data_dir data`
-2.  Verify the **Validation Accuracy** is above **82.13%**.
-3.  Check the `results/winning_run_affectnet/training_history.png` to ensure loss was steadily decreasing.
+## 🚀 Phase 2: Winning Run (University RTX 5000 Ada PC)
+**Goal**: Beat the 82.13% baseline with maximum precision.
+**Benefit**: 32GB VRAM allows for larger batch processing and longer training.
 
----
-
-## 🎬 Step 4: Real-time Demo
-Use your newly trained model for the webcam:
-```bash
-python webcam_demo_ultra.py --model_path results/winning_run_affectnet/best_model.pth
+```powershell
+python training/train.py `
+  --data_dir data `
+  --epochs 60 `
+  --batch_size 32 `
+  --model_type full `
+  --backbone efficientnet_b4 `
+  --learning_rate 0.0001 `
+  --lstm_hidden 512 `
+  --lstm_layers 2 `
+  --num_workers 8 `
+  --use_class_weights `
+  --checkpoint_dir results/phase2_winning_run
 ```
+
+---
+
+## 📈 Verification Steps (Applies to both)
+1.  **Evaluate**: `python training/evaluate.py --checkpoint_path <path_to_best_model> --data_dir data`
+2.  **Webcam**: `python webcam_demo_ultra.py --model_path <path_to_best_model>`
+3.  **Baseline Check**: Compare your Phase 2 Val Accuracy against **82.13%**.

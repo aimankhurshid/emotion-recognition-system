@@ -27,14 +27,14 @@ pip install -r requirements.txt
 3.  Ensure the folders are in `data/train`, `data/val`, etc.
     *   *Verify: You should have subfolders like `0_neutral`, `7_contempt` inside `data/train`.*
 
-## 3. The Winning Training Command
-Run this command to start the ~12-24 hour training. This uses the **EfficientNet-B4 + 512 Hidden LSTM** strategy:
+## 3. The Laptop Training Command
+Run this command to start the training on the **RTX 4060**. We use a **Batch Size of 16** to prevent "Out of Memory" errors on the 8GB VRAM card:
 
 ```powershell
 python training/train.py `
   --data_dir data `
   --epochs 60 `
-  --batch_size 32 `
+  --batch_size 16 `
   --model_type full `
   --backbone efficientnet_b4 `
   --learning_rate 0.0001 `
@@ -42,7 +42,7 @@ python training/train.py `
   --lstm_layers 2 `
   --num_workers 4 `
   --use_class_weights `
-  --checkpoint_dir results/winning_run_rtx_laptop
+  --checkpoint_dir results/laptop_run_4060
 ```
 
 ## 4. Tips for your Friend's Laptop
