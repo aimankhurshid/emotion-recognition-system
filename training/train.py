@@ -128,16 +128,25 @@ def main(args):
     print(f"  Test batches: {len(test_loader)}")
     
     print("\nCreating model...")
-    model = get_model(
-        model_type=args.model_type,
-        num_classes=args.num_classes,
-        backbone=args.backbone,
-        pretrained=True,
-        lstm_hidden=args.lstm_hidden,
-        lstm_layers=args.lstm_layers,
-        dropout=args.dropout
-    )
     model = model.to(device)
+    
+    optimizer = optim.AdamW(
+        model.parameters(),
+        lr=args.learning_rate,
+        weight_decay=args.weight_decay
+    )
+    
+    start_epoch = 1
+    best_acc = 0.0
+    
+    if args.resume and os.path.exists(args.resume):
+        print(f"Resuming from checkpoint: {args.resume}")
+        checkpoint = torch.load(args.resume, map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_epoch = checkpoint['epoch'] + 1
+        best_acc = checkpoint['best_acc']
+        print(f"Loaded checkpoint at epoch {checkpoint['epoch']} with acc {best_acc:.2f}%")
     
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -151,11 +160,7 @@ def main(args):
         criterion = nn.CrossEntropyLoss()
         print("Using standard cross-entropy loss")
     
-    optimizer = optim.AdamW(
-        model.parameters(),
-        lr=args.learning_rate,
-        weight_decay=args.weight_decay
-    )
+    # Optimizer was moved up to handle resume logic
     
     scheduler = ReduceLROnPlateau(
         optimizer,
@@ -176,13 +181,13 @@ def main(args):
         'val_acc': []
     }
     
-    best_acc = 0.0
+    # start_epoch and best_acc moved up to handle resume logic
     patience_counter = 0
     
     print(f"\nStarting training for {args.epochs} epochs...")
     print("="*80)
     
-    for epoch in range(1, args.epochs + 1):
+    for epoch in range(start_epoch, args.epochs + 1):
         train_loss, train_acc = train_epoch(
             model, train_loader, criterion, optimizer, device, epoch
         )
@@ -306,6 +311,8 @@ if __name__ == '__main__':
                         help='Number of data loading workers')
     parser.add_argument('--seed', type=int, default=42,
                         help='Random seed')
+    parser.add_argument('--resume', type=str, default=None,
+                        help='Path to checkpoint to resume training from')
     
     args = parser.parse_args()
     

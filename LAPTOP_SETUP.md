@@ -45,7 +45,23 @@ python training/train.py `
   --checkpoint_dir results/laptop_run_4060
 ```
 
-## 4. Tips for your Friend's Laptop
+## 4. Resuming Training (If Laptop Shuts Down)
+If the laptop restarts, don't worry! You can resume from the last saved epoch (saved every 10 epochs) by adding `--resume`:
+
+```powershell
+python training/train.py `
+  --data_dir data `
+  --resume results/checkpoints/checkpoint_epoch_10_full_efficientnet_b4_XYZ.pth `
+  --batch_size 16
+```
+*(Check the `results/checkpoints/` folder for the exact filename).*
+
+## 5. Storage Requirements
+- **Dataset**: ~8GB (Unzipped).
+- **Model Checkpoints**: Each "savepoint" takes **~300 MB**. 
+- **Total Expected**: Budget at least **15-20 GB** of free space for the full run and cached data.
+
+## 6. Tips for your Friend's Laptop
 - **Plug in the Charger**: Laptops throttle GPU power by 50-80% when unplugged.
 - **Keep it Cool**: Lift the back of the laptop or use a cooling pad. This is a heavy training run.
 - **Disable Sleep**: Go to Power Settings and set "Sleep" to **Never** while plugged in.
