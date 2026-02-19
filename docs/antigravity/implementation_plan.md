@@ -1,36 +1,46 @@
-# Remote Training Setup Plan
+# Plan to Beat AffectNet+ Baseline (82.13%)
 
-## Goal Description
-The goal is to set up a clean, isolated git repository for the `emotion_recognition_system` project to facilitate safe remote training on a friend's laptop. Currently, the user's home directory is initialized as a git repository, which poses a risk of pushing unrelated personal files. We will fix this by initializing a repo specifically for the project.
+This plan outlines the optimized training strategy to ensure the Bi-LSTM enhanced model outperforms the DCD-DAN base paper on the AffectNet+ dataset.
 
-## User Review Required
-> [!WARNING]
-> Your home directory `/Users/ayeman` is currently a git repository linked to your project remote. This is risky as it tracks all your personal files.
-> **We will initialize a new git repository strictly within the `emotion_recognition_system` folder.**
-> - This isolates your project.
-> - We will force push to the remote to overwrite any accidental uploads of your home directory if they occurred.
+## Proposed Strategy
 
-## Proposed Changes
+To maximize performance, we will use the most powerful configuration available in our codebase:
 
-### Project Structure
-- Initialize `git` in `/Users/ayeman/Downloads/minorproject_facial/emotion_recognition_system`.
-- Create a `.gitignore` specific to Python/Deep Learning to keep the repo clean.
-- Configure the remote `origin`.
+### 1. Architecture Optimization
+- **Backbone**: **EfficientNet-B4** (Default). It captures finer details than ResNet50 with fewer parameters.
+- **Bi-LSTM Hidden Size**: Increase from 256 to **512**. This allows the temporal modeling layer to capture more complex relationships between the 49 spatial tokens (from the 7x7 attention map).
+- **Dual Attention**: Ensure both Channel and Spatial attention are active to weigh "what" and "where" features are important.
 
-### Remote Training Instructions
-We will create a specific `REMOTE_SETUP.md` file containing detailed instructions for the friend's laptop.
-#### [NEW] [REMOTE_SETUP.md](file:///Users/ayeman/Downloads/minorproject_facial/emotion_recognition_system/REMOTE_SETUP.md)
-This file will contain:
-- Cloning instructions.
-- Environment setup (conda/pip).
-- Running the training script.
+### 2. Training Hyperparameters
+- **Optimizer**: **AdamW** with a learning rate of **1e-4**. AdamW is superior for transformer-like and attention architectures.
+- **Scheduler**: **ReduceLROnPlateau** (Patience 5). This will drop the learning rate when validation accuracy plateaus, helping the model find the local minima.
+- **Loss Function**: **Weighted Cross Entropy**. This is critical as AffectNet+ often has fewer samples for emotions like "Contempt" and "Disgust".
+- **Batch Size**: **32** (or **16** for laptop).
+
+### 3. Storage & Savepoints (Fault-Tolerance)
+- **Model Checkpoints**: Each `.pth` file is ~250MB. 
+- **Resume System**: Use `--resume results/checkpoints/latest_checkpoint.pth` to restart training if the laptop shuts down.
+- **Safety Precautions**: 
+    - **Gradient Clipping**: Prevents exploding gradients during long laptop runs.
+    - **Latest Checkpoint**: Automatically saves `latest.pth` every epoch to minimize data loss.
+    - **NaN Detection**: Automatically stops and saves if numerical errors occur.
+    - **Graceful Shutdown**: Pressing `Ctrl+C` will now save a special `interrupted.pth` before exiting.
+
+## Execution Steps
+
+### [Component] Training Execution
+
+#### [MODIFY] [FINAL_TRAINING_ROADMAP.md](file:///Users/ayeman/Downloads/minorproject_facial/emotion_recognition_system/FINAL_TRAINING_ROADMAP.md)
+Update the roadmap to include the specific "Winning Command" optimized for AffectNet+.
 
 ## Verification Plan
 
-### Automated Tests
-- Verify `git status` shows only project files.
-- Verify `git remote -v` is correct.
+### Automated Verification
+After the training run completes, we will verify the results using:
+1. **Validation Accuracy**: Must exceed **82.13%**.
+2. **Metrics Report**: Run `python training/evaluate.py` to generate the F1-score and Precision/Recall for all 8 classes.
+3. **Confusion Matrix**: Visually inspect the matrix to ensure "Disgust" and "Contempt" (the hardest classes) are being classified correctly.
 
 ### Manual Verification
-- User will push the code.
-- User will clone on friend's laptop and verify it works.
+1. **Webcam Test**: Run `python webcam_demo_ultra.py` using the new `best_model.pth`.
+2. **Visual Check**: Ensure the circuit logic correctly identifies features for the hardest emotions (e.g., Brows Down + Jaw Tight = Anger).
