@@ -39,7 +39,16 @@ def train_epoch(model, train_loader, criterion, optimizer, device, epoch):
         loss = criterion(outputs, labels)
         
         loss.backward()
+        
+        # 1. Gradient Clipping (Safety Precaution)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        
         optimizer.step()
+        
+        # 2. NaN Check (Safety Precaution)
+        if torch.isnan(loss):
+            print(f"\n[CRITICAL WARNING] Loss is NaN at batch {batch_idx}. Stopping training.")
+            return None, None
         
         _, predicted = outputs.max(1)
         accuracy = (predicted == labels).float().mean().item() * 100
@@ -187,10 +196,14 @@ def main(args):
     print(f"\nStarting training for {args.epochs} epochs...")
     print("="*80)
     
-    for epoch in range(start_epoch, args.epochs + 1):
-        train_loss, train_acc = train_epoch(
-            model, train_loader, criterion, optimizer, device, epoch
-        )
+    try:
+        for epoch in range(start_epoch, args.epochs + 1):
+            train_loss, train_acc = train_epoch(
+                model, train_loader, criterion, optimizer, device, epoch
+            )
+            
+            if train_loss is None: # NaN triggered
+                break
         
         val_loss, val_acc, val_metrics, all_labels, all_preds = validate(
             model, val_loader, criterion, device, epoch
@@ -238,11 +251,22 @@ def main(args):
             checkpoint_path = os.path.join(args.checkpoint_dir, f'checkpoint_epoch_{epoch}_{run_name}.pth')
             save_checkpoint(model, optimizer, epoch, val_acc, checkpoint_path)
         
-        if patience_counter >= args.early_stop_patience:
-            print(f"\nEarly stopping triggered after {epoch} epochs")
-            break
-        
-        print("="*80)
+            if patience_counter >= args.early_stop_patience:
+                print(f"\nEarly stopping triggered after {epoch} epochs")
+                break
+            
+            # 3. Always save a 'latest' checkpoint for maximum safety
+            latest_path = os.path.join(args.checkpoint_dir, f'latest_checkpoint_{run_name}.pth')
+            save_checkpoint(model, optimizer, epoch, val_acc, latest_path)
+            
+            print("="*80)
+            
+    except KeyboardInterrupt:
+        print("\n\n[USER INTERRUPT] Saving security checkpoint before exiting...")
+        security_path = os.path.join(args.checkpoint_dir, f'interrupted_epoch_{epoch}_{run_name}.pth')
+        save_checkpoint(model, optimizer, epoch, val_acc, security_path)
+        print(f"Checkpoint saved to: {security_path}")
+        sys.exit(0)
     
     history_path = os.path.join(args.checkpoint_dir, f'history_{run_name}.json')
     with open(history_path, 'w') as f:
