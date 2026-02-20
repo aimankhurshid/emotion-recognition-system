@@ -137,7 +137,14 @@ def main(args):
     print(f"  Test batches: {len(test_loader)}")
     
     print("\nCreating model...")
-    model = model.to(device)
+    model = get_model(
+        model_type=args.model_type,
+        num_classes=args.num_classes,
+        backbone=args.backbone,
+        lstm_hidden=args.lstm_hidden,
+        lstm_layers=args.lstm_layers,
+        dropout=args.dropout
+    ).to(device)
     
     optimizer = optim.AdamW(
         model.parameters(),
@@ -169,8 +176,6 @@ def main(args):
         criterion = nn.CrossEntropyLoss()
         print("Using standard cross-entropy loss")
     
-    # Optimizer was moved up to handle resume logic
-    
     scheduler = ReduceLROnPlateau(
         optimizer,
         mode='max',
@@ -190,8 +195,8 @@ def main(args):
         'val_acc': []
     }
     
-    # start_epoch and best_acc moved up to handle resume logic
     patience_counter = 0
+    val_acc = 0.0
     
     print(f"\nStarting training for {args.epochs} epochs...")
     print("="*80)
@@ -204,59 +209,59 @@ def main(args):
             
             if train_loss is None: # NaN triggered
                 break
-        
-        val_loss, val_acc, val_metrics, all_labels, all_preds = validate(
-            model, val_loader, criterion, device, epoch
-        )
-        
-        history['train_loss'].append(train_loss)
-        history['val_loss'].append(val_loss)
-        history['train_acc'].append(train_acc)
-        history['val_acc'].append(val_acc)
-        
-        writer.add_scalar('Loss/train', train_loss, epoch)
-        writer.add_scalar('Loss/val', val_loss, epoch)
-        writer.add_scalar('Accuracy/train', train_acc, epoch)
-        writer.add_scalar('Accuracy/val', val_acc, epoch)
-        writer.add_scalar('Metrics/precision', val_metrics['precision'], epoch)
-        writer.add_scalar('Metrics/recall', val_metrics['recall'], epoch)
-        writer.add_scalar('Metrics/f1', val_metrics['f1'], epoch)
-        
-        scheduler.step(val_acc)
-        
-        print(f"\nEpoch {epoch}/{args.epochs}:")
-        print(f"  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
-        print(f"  Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%")
-        print(f"  Val Precision: {val_metrics['precision']:.4f}, Recall: {val_metrics['recall']:.4f}, F1: {val_metrics['f1']:.4f}")
-        
-        if val_acc > best_acc:
-            best_acc = val_acc
-            patience_counter = 0
             
-            checkpoint_path = os.path.join(args.checkpoint_dir, f'best_model_{run_name}.pth')
-            save_checkpoint(model, optimizer, epoch, best_acc, checkpoint_path)
-            print(f"  ✓ New best model saved! Accuracy: {best_acc:.2f}%")
+            val_loss, val_acc, val_metrics, all_labels, all_preds = validate(
+                model, val_loader, criterion, device, epoch
+            )
             
-            # Print detailed per-class report for the best model
-            from sklearn.metrics import classification_report
-            from models import EMOTION_LABELS
-            print("\n  Detailed Classification Report (Best Model):")
-            print(classification_report(all_labels, all_preds, target_names=EMOTION_LABELS, digits=3))
+            history['train_loss'].append(train_loss)
+            history['val_loss'].append(val_loss)
+            history['train_acc'].append(train_acc)
+            history['val_acc'].append(val_acc)
             
-        else:
-            patience_counter += 1
-            print(f"  No improvement ({patience_counter}/{args.early_stop_patience})")
-        
-        if epoch % args.save_interval == 0:
-            checkpoint_path = os.path.join(args.checkpoint_dir, f'checkpoint_epoch_{epoch}_{run_name}.pth')
-            save_checkpoint(model, optimizer, epoch, val_acc, checkpoint_path)
-        
+            writer.add_scalar('Loss/train', train_loss, epoch)
+            writer.add_scalar('Loss/val', val_loss, epoch)
+            writer.add_scalar('Accuracy/train', train_acc, epoch)
+            writer.add_scalar('Accuracy/val', val_acc, epoch)
+            writer.add_scalar('Metrics/precision', val_metrics['precision'], epoch)
+            writer.add_scalar('Metrics/recall', val_metrics['recall'], epoch)
+            writer.add_scalar('Metrics/f1', val_metrics['f1'], epoch)
+            
+            scheduler.step(val_acc)
+            
+            print(f"\nEpoch {epoch}/{args.epochs}:")
+            print(f"  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
+            print(f"  Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%")
+            print(f"  Val Precision: {val_metrics['precision']:.4f}, Recall: {val_metrics['recall']:.4f}, F1: {val_metrics['f1']:.4f}")
+            
+            if val_acc > best_acc:
+                best_acc = val_acc
+                patience_counter = 0
+                
+                checkpoint_path = os.path.join(args.checkpoint_dir, f'best_model_{run_name}.pth')
+                save_checkpoint(model, optimizer, epoch, best_acc, checkpoint_path)
+                print(f"  ✓ New best model saved! Accuracy: {best_acc:.2f}%")
+                
+                # Print detailed per-class report for the best model
+                from sklearn.metrics import classification_report
+                from models import EMOTION_LABELS
+                print("\n  Detailed Classification Report (Best Model):")
+                print(classification_report(all_labels, all_preds, target_names=EMOTION_LABELS, digits=3))
+                
+            else:
+                patience_counter += 1
+                print(f"  No improvement ({patience_counter}/{args.early_stop_patience})")
+            
+            if epoch % args.save_interval == 0:
+                checkpoint_path = os.path.join(args.checkpoint_dir, f'checkpoint_epoch_{epoch}_{run_name}.pth')
+                save_checkpoint(model, optimizer, epoch, val_acc, checkpoint_path)
+            
             if patience_counter >= args.early_stop_patience:
                 print(f"\nEarly stopping triggered after {epoch} epochs")
                 break
-            
-            # 3. Always save a 'latest' checkpoint for maximum safety
-            latest_path = os.path.join(args.checkpoint_dir, f'latest_checkpoint_{run_name}.pth')
+                
+            # Always save a 'latest' checkpoint for maximum safety
+            latest_path = os.path.join(args.checkpoint_dir, f'latest_checkpoint.pth')
             save_checkpoint(model, optimizer, epoch, val_acc, latest_path)
             
             print("="*80)
@@ -267,6 +272,7 @@ def main(args):
         save_checkpoint(model, optimizer, epoch, val_acc, security_path)
         print(f"Checkpoint saved to: {security_path}")
         sys.exit(0)
+
     
     history_path = os.path.join(args.checkpoint_dir, f'history_{run_name}.json')
     with open(history_path, 'w') as f:
