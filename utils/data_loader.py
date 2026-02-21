@@ -207,7 +207,7 @@ def split_dataset(data_dir, val_split=0.15, test_split=0.15, random_state=42):
     return train_files, val_files, test_files
 
 
-def get_data_loaders(data_dir, batch_size=32, num_workers=4, img_size=224):
+def get_data_loaders(data_dir, batch_size=32, num_workers=4, img_size=224, persistent_workers=True):
     """
     Create PyTorch data loaders for train/val/test
     
@@ -216,6 +216,7 @@ def get_data_loaders(data_dir, batch_size=32, num_workers=4, img_size=224):
         batch_size: Batch size
         num_workers: Number of workers for data loading
         img_size: Input image size
+        persistent_workers: Keep workers alive between epochs (faster)
     
     Returns:
         train_loader, val_loader, test_loader, class_weights
@@ -231,28 +232,31 @@ def get_data_loaders(data_dir, batch_size=32, num_workers=4, img_size=224):
     if len(train_dataset) > 0:
         class_weights = compute_class_weights(train_dataset)
     
+    # Optimized dataloader kwargs
+    loader_kwargs = {
+        'batch_size': batch_size,
+        'num_workers': num_workers,
+        'pin_memory': True,
+        'persistent_workers': persistent_workers if num_workers > 0 else False,
+        'prefetch_factor': 2 if num_workers > 0 else None
+    }
+    
     train_loader = DataLoader(
-        train_dataset, 
-        batch_size=batch_size, 
-        shuffle=True, 
-        num_workers=num_workers,
-        pin_memory=True
+        train_dataset,
+        shuffle=True,
+        **loader_kwargs
     )
     
     val_loader = DataLoader(
-        val_dataset, 
-        batch_size=batch_size, 
-        shuffle=False, 
-        num_workers=num_workers,
-        pin_memory=True
+        val_dataset,
+        shuffle=False,
+        **loader_kwargs
     )
     
     test_loader = DataLoader(
-        test_dataset, 
-        batch_size=batch_size, 
-        shuffle=False, 
-        num_workers=num_workers,
-        pin_memory=True
+        test_dataset,
+        shuffle=False,
+        **loader_kwargs
     )
     
     return train_loader, val_loader, test_loader, class_weights

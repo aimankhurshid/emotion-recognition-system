@@ -21,8 +21,8 @@ from models import get_model, WeightedCrossEntropyLoss, save_checkpoint
 from utils import get_data_loaders, compute_metrics, AverageMeter, plot_training_history
 
 
-def train_epoch(model, train_loader, criterion, optimizer, device, epoch):
-    """Train for one epoch"""
+def train_epoch(model, train_loader, criterion, optimizer, device, epoch, scaler=None, use_amp=True):
+    """Train for one epoch with mixed precision support"""
     model.train()
     
     losses = AverageMeter()
@@ -31,19 +31,27 @@ def train_epoch(model, train_loader, criterion, optimizer, device, epoch):
     pbar = tqdm(train_loader, desc=f'Epoch {epoch} [Train]')
     
     for batch_idx, (images, labels) in enumerate(pbar):
-        images, labels = images.to(device), labels.to(device)
+        images, labels = images.to(device, non_blocking=True), labels.to(device, non_blocking=True)
         
-        optimizer.zero_grad()
+        optimizer.zero_grad(set_to_none=True)  # More efficient than zero_grad()
         
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-        
-        loss.backward()
-        
-        # 1. Gradient Clipping (Safety Precaution)
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-        
-        optimizer.step()
+        # Mixed precision training
+        if use_amp and scaler is not None:
+            with torch.amp.autocast('cuda'):
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+            
+            scaler.scale(loss).backward()
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()
         
         # 2. NaN Check (Safety Precaution)
         if torch.isnan(loss):
@@ -51,7 +59,7 @@ def train_epoch(model, train_loader, criterion, optimizer, device, epoch):
             return None, None
         
         _, predicted = outputs.max(1)
-        accuracy = (predicted == labels).float().mean().item() * 100
+        accuracy = (predicted == labels).sum().item() / labels.size(0) * 100  # type: ignore
         
         losses.update(loss.item(), images.size(0))
         accuracies.update(accuracy, images.size(0))
@@ -64,8 +72,8 @@ def train_epoch(model, train_loader, criterion, optimizer, device, epoch):
     return losses.avg, accuracies.avg
 
 
-def validate(model, val_loader, criterion, device, epoch):
-    """Validate the model"""
+def validate(model, val_loader, criterion, device, epoch, use_amp=True):
+    """Validate the model with mixed precision support"""
     model.eval()
     
     losses = AverageMeter()
@@ -78,13 +86,19 @@ def validate(model, val_loader, criterion, device, epoch):
     
     with torch.no_grad():
         for images, labels in pbar:
-            images, labels = images.to(device), labels.to(device)
+            images, labels = images.to(device, non_blocking=True), labels.to(device, non_blocking=True)
             
-            outputs = model(images)
-            loss = criterion(outputs, labels)
+            # Mixed precision inference
+            if use_amp:
+                with torch.amp.autocast('cuda'):
+                    outputs = model(images)
+                    loss = criterion(outputs, labels)
+            else:
+                outputs = model(images)
+                loss = criterion(outputs, labels)
             
             _, predicted = outputs.max(1)
-            accuracy = (predicted == labels).float().mean().item() * 100
+            accuracy = (predicted == labels).sum().item() / labels.size(0) * 100  # type: ignore
             
             losses.update(loss.item(), images.size(0))
             accuracies.update(accuracy, images.size(0))
@@ -124,7 +138,8 @@ def main(args):
         args.data_dir,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
-        img_size=args.img_size
+        img_size=args.img_size,
+        persistent_workers=(args.num_workers > 0)
     )
     
     if len(train_loader) == 0:
@@ -145,6 +160,17 @@ def main(args):
         lstm_layers=args.lstm_layers,
         dropout=args.dropout
     ).to(device)
+    
+    # Enable optimizations for faster training
+    if args.compile_model and hasattr(torch, 'compile'):
+        print("Compiling model with torch.compile for faster training...")
+        model = torch.compile(model)
+    
+    # Mixed precision training scaler
+    scaler = torch.amp.GradScaler('cuda') if args.use_amp and device.type == 'cuda' else None
+    use_amp = args.use_amp and device.type == 'cuda'
+    if use_amp:
+        print("Using automatic mixed precision (AMP) for faster training")
     
     optimizer = optim.AdamW(
         model.parameters(),
@@ -204,14 +230,15 @@ def main(args):
     try:
         for epoch in range(start_epoch, args.epochs + 1):
             train_loss, train_acc = train_epoch(
-                model, train_loader, criterion, optimizer, device, epoch
+                model, train_loader, criterion, optimizer, device, epoch,
+                scaler=scaler, use_amp=use_amp
             )
             
             if train_loss is None: # NaN triggered
                 break
             
             val_loss, val_acc, val_metrics, all_labels, all_preds = validate(
-                model, val_loader, criterion, device, epoch
+                model, val_loader, criterion, device, epoch, use_amp=use_amp
             )
             
             history['train_loss'].append(train_loss)
@@ -343,6 +370,12 @@ if __name__ == '__main__':
                         help='Random seed')
     parser.add_argument('--resume', type=str, default=None,
                         help='Path to checkpoint to resume training from')
+    
+    # Performance optimization flags
+    parser.add_argument('--use_amp', action='store_true', default=True,
+                        help='Use automatic mixed precision (fp16) for faster training')
+    parser.add_argument('--compile_model', action='store_true', default=False,
+                        help='Use torch.compile for faster training (PyTorch 2.0+)')
     
     args = parser.parse_args()
     

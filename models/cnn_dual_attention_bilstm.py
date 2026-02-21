@@ -36,9 +36,16 @@ class BiLSTMDualAttention(nn.Module):
         
         self.dual_attention = DualAttention(in_channels=feature_dim)
         
-        self.adaptive_pool = nn.AdaptiveAvgPool2d((7, 7))
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((4, 4))  # 4x4=16 timesteps (was 7x7=49)
         
-        lstm_input_size = feature_dim
+        # Project high-dim features down before LSTM (1792 -> 512)
+        self.feature_projection = nn.Sequential(
+            nn.Linear(feature_dim, 512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(dropout * 0.5)
+        )
+        
+        lstm_input_size = 512  # Projected dimension
         self.lstm = nn.LSTM(
             input_size=lstm_input_size,
             hidden_size=lstm_hidden,
@@ -70,7 +77,10 @@ class BiLSTMDualAttention(nn.Module):
         features = self.adaptive_pool(features)
         
         b, c, h, w = features.size()
-        features_reshaped = features.view(b, c, h * w).permute(0, 2, 1)
+        features_reshaped = features.view(b, c, h * w).permute(0, 2, 1)  # (B, 16, 1792)
+        
+        # Project to lower dimension for LSTM efficiency
+        features_reshaped = self.feature_projection(features_reshaped)  # (B, 16, 512)
         
         lstm_out, (h_n, c_n) = self.lstm(features_reshaped)
         
