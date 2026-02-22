@@ -22,11 +22,11 @@ from utils import get_transforms
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-CAMERA_INDEX = 1  # Mac built-in camera
-CAMERA_WIDTH = 640  # Lower resolution for max FPS
-CAMERA_HEIGHT = 360
-TARGET_FPS = 30  # Realistic target for CPU
-DETECTION_SCALE = 0.3  # Very aggressive downscaling
+CAMERA_INDEX = 0  # Default camera
+CAMERA_WIDTH = 1280  
+CAMERA_HEIGHT = 720
+TARGET_FPS = 30  
+DETECTION_SCALE = 0.5  
 PROCESS_EVERY_N_FRAMES = 8  # Process emotion every 8 frames (every ~0.25s)
 DETECT_EVERY_N_FRAMES = 4  # Detect faces every 4 frames
 USE_THREADING = True
@@ -41,7 +41,14 @@ should_exit = False
 
 # Model setup
 print("📦 Loading model...")
-model = get_model(model_type='full', num_classes=8, pretrained=False)
+model = get_model(model_type='full', num_classes=8, pretrained=False, backbone='efficientnet_b4', lstm_hidden=512)
+checkpoint_path = r"results\phase1_laptop_benchmark\best_model_full_efficientnet_b4_20260221_004807.pth"
+print(f"Loading checkpoint from: {checkpoint_path}")
+checkpoint = torch.load(checkpoint_path, map_location='cpu')
+if 'model_state_dict' in checkpoint:
+    model.load_state_dict(checkpoint['model_state_dict'])
+else:
+    model.load_state_dict(checkpoint)
 model.eval()
 
 # GPU optimization
@@ -143,6 +150,7 @@ def predict_emotion_fast(face_img):
         confidence = probs[pred_idx].item()
         return emotion, confidence
     except Exception as e:
+        print(f"❌ Error in prediction: {e}")
         return 'Neutral', 0.5
 
 # ============================================================================

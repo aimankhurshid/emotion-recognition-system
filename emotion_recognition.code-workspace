@@ -1,0 +1,51 @@
+{
+    "folders": [
+        {
+            "name": "Emotion Recognition System",
+            "path": "."
+        }
+    ],
+    "settings": {
+        "python.defaultInterpreterPath": "venv/Scripts/python.exe",
+        "python.terminal.activateEnvInSelectedTerminal": true,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        },
+        "files.exclude": {
+            "**/__pycache__": true,
+            "**/.git": true,
+            "**/.pytest_cache": true,
+            "**/venv": false
+        }
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Train Model (Optimized)",
+                "type": "python",
+                "request": "launch",
+                "program": "training/train.py",
+                "console": "integratedTerminal",
+                "args": [
+                    "--data_dir",
+                    "data",
+                    "--checkpoint_dir",
+                    "results/optimized_run",
+                    "--log_dir",
+                    "results/logs",
+                    "--batch_size",
+                    "64",
+                    "--num_workers",
+                    "8",
+                    "--dropout",
+                    "0.6",
+                    "--learning_rate",
+                    "5e-5",
+                    "--use_class_weights"
+                ]
+            }
+        ]
+    }
+}
