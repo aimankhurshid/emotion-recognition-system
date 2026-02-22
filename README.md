@@ -335,3 +335,5 @@ python train.py --batch_size 16
 ---
 
 **Built with ❤️ for advancing emotion AI research**
+
+*Last Updated: February 22, 2026*
