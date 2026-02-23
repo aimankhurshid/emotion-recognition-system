@@ -13,12 +13,41 @@ from tqdm import tqdm
 import numpy as np
 import json
 from datetime import datetime
+import logging
 
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import get_model, WeightedCrossEntropyLoss, save_checkpoint
 from utils import get_data_loaders, compute_metrics, AverageMeter, plot_training_history
+
+
+def setup_logging(log_dir, run_name):
+    """Setup comprehensive logging to both file and console"""
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, f'{run_name}_training.log')
+    
+    # Create logger
+    logger = logging.getLogger('training')
+    logger.setLevel(logging.INFO)
+    
+    # File handler
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.INFO)
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    
+    # Formatter
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    
+    return logger
 
 
 def train_epoch(model, train_loader, criterion, optimizer, device, epoch, scaler=None, use_amp=True):
@@ -212,7 +241,17 @@ def main(args):
     
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     run_name = f"{args.model_type}_{args.backbone}_{timestamp}"
+    
+    # Setup logging
+    logger = setup_logging(args.log_dir, run_name)
+    logger.info(f"Starting training run: {run_name}")
+    logger.info(f"Device: {device}")
+    logger.info(f"Model: {args.model_type} with backbone {args.backbone}")
+    logger.info(f"Batch size: {args.batch_size}, Epochs: {args.epochs}")
+    logger.info(f"Learning rate: {args.learning_rate}, Weight decay: {args.weight_decay}")
+    
     writer = SummaryWriter(os.path.join(args.log_dir, run_name))
+    logger.info(f"TensorBoard logs: {os.path.join(args.log_dir, run_name)}")
     
     history = {
         'train_loss': [],
@@ -246,6 +285,7 @@ def main(args):
             history['train_acc'].append(train_acc)
             history['val_acc'].append(val_acc)
             
+            # Write to TensorBoard
             writer.add_scalar('Loss/train', train_loss, epoch)
             writer.add_scalar('Loss/val', val_loss, epoch)
             writer.add_scalar('Accuracy/train', train_acc, epoch)
@@ -253,13 +293,31 @@ def main(args):
             writer.add_scalar('Metrics/precision', val_metrics['precision'], epoch)
             writer.add_scalar('Metrics/recall', val_metrics['recall'], epoch)
             writer.add_scalar('Metrics/f1', val_metrics['f1'], epoch)
+            writer.add_scalar('Learning_Rate', optimizer.param_groups[0]['lr'], epoch)
+            
+            # Add histograms of model parameters
+            for name, param in model.named_parameters():
+                if param.requires_grad:
+                    writer.add_histogram(f'Parameters/{name}', param, epoch)
+                    if param.grad is not None:
+                        writer.add_histogram(f'Gradients/{name}', param.grad, epoch)
+            
+            # Flush writer to ensure data is saved
+            writer.flush()
+            
+            # Save history to JSON after every epoch
+            history_path = os.path.join(args.checkpoint_dir, f'history_{run_name}.json')
+            with open(history_path, 'w') as f:
+                json.dump(history, f, indent=4)
             
             scheduler.step(val_acc)
             
-            print(f"\nEpoch {epoch}/{args.epochs}:")
-            print(f"  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
-            print(f"  Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%")
-            print(f"  Val Precision: {val_metrics['precision']:.4f}, Recall: {val_metrics['recall']:.4f}, F1: {val_metrics['f1']:.4f}")
+            # Log epoch results
+            logger.info(f"\nEpoch {epoch}/{args.epochs}:")
+            logger.info(f"  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
+            logger.info(f"  Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%")
+            logger.info(f"  Val Precision: {val_metrics['precision']:.4f}, Recall: {val_metrics['recall']:.4f}, F1: {val_metrics['f1']:.4f}")
+            logger.info(f"  Learning Rate: {optimizer.param_groups[0]['lr']:.6f}")
             
             if val_acc > best_acc:
                 best_acc = val_acc
@@ -267,55 +325,91 @@ def main(args):
                 
                 checkpoint_path = os.path.join(args.checkpoint_dir, f'best_model_{run_name}.pth')
                 save_checkpoint(model, optimizer, epoch, best_acc, checkpoint_path)
-                print(f"  ✓ New best model saved! Accuracy: {best_acc:.2f}%")
+                logger.info(f"  ✓ New best model saved! Accuracy: {best_acc:.2f}%")
                 
                 # Print detailed per-class report for the best model
                 from sklearn.metrics import classification_report
                 from models import EMOTION_LABELS
-                print("\n  Detailed Classification Report (Best Model):")
-                print(classification_report(all_labels, all_preds, target_names=EMOTION_LABELS, digits=3))
+                logger.info("\n  Detailed Classification Report (Best Model):")
+                report = classification_report(all_labels, all_preds, target_names=EMOTION_LABELS, digits=3)
+                logger.info(f"\n{report}")
                 
             else:
                 patience_counter += 1
-                print(f"  No improvement ({patience_counter}/{args.early_stop_patience})")
+                logger.info(f"  No improvement ({patience_counter}/{args.early_stop_patience})")
             
             if epoch % args.save_interval == 0:
                 checkpoint_path = os.path.join(args.checkpoint_dir, f'checkpoint_epoch_{epoch}_{run_name}.pth')
                 save_checkpoint(model, optimizer, epoch, val_acc, checkpoint_path)
+                logger.info(f"  Checkpoint saved at epoch {epoch}")
             
             if patience_counter >= args.early_stop_patience:
-                print(f"\nEarly stopping triggered after {epoch} epochs")
+                logger.info(f"\nEarly stopping triggered after {epoch} epochs")
                 break
                 
             # Always save a 'latest' checkpoint for maximum safety
             latest_path = os.path.join(args.checkpoint_dir, f'latest_checkpoint.pth')
             save_checkpoint(model, optimizer, epoch, val_acc, latest_path)
             
-            print("="*80)
+            logger.info("="*80)
             
     except KeyboardInterrupt:
-        print("\n\n[USER INTERRUPT] Saving security checkpoint before exiting...")
+        logger.warning("\n[USER INTERRUPT] Saving security checkpoint before exiting...")
         security_path = os.path.join(args.checkpoint_dir, f'interrupted_epoch_{epoch}_{run_name}.pth')
         save_checkpoint(model, optimizer, epoch, val_acc, security_path)
-        print(f"Checkpoint saved to: {security_path}")
+        logger.info(f"Checkpoint saved to: {security_path}")
+        writer.flush()
+        writer.close()
         sys.exit(0)
 
     
+    # Save final training history
     history_path = os.path.join(args.checkpoint_dir, f'history_{run_name}.json')
     with open(history_path, 'w') as f:
         json.dump(history, f, indent=4)
+    logger.info(f"Training history saved to: {history_path}")
     
+    # Generate and save training plots
     plot_path = os.path.join(args.checkpoint_dir, f'training_history_{run_name}.png')
     plot_training_history(history, save_path=plot_path)
+    logger.info(f"Training plot saved to: {plot_path}")
     
+    # Create comprehensive training summary
+    summary_path = os.path.join(args.checkpoint_dir, f'training_summary_{run_name}.txt')
+    with open(summary_path, 'w') as f:
+        f.write(f"Training Summary - {run_name}\n")
+        f.write("="*80 + "\n\n")
+        f.write(f"Configuration:\n")
+        f.write(f"  Model: {args.model_type} with {args.backbone}\n")
+        f.write(f"  Device: {device}\n")
+        f.write(f"  Batch Size: {args.batch_size}\n")
+        f.write(f"  Total Epochs: {epoch}\n")
+        f.write(f"  Learning Rate: {args.learning_rate}\n")
+        f.write(f"  Weight Decay: {args.weight_decay}\n\n")
+        f.write(f"Results:\n")
+        f.write(f"  Best Validation Accuracy: {best_acc:.2f}%\n")
+        f.write(f"  Final Training Accuracy: {history['train_acc'][-1]:.2f}%\n")
+        f.write(f"  Final Training Loss: {history['train_loss'][-1]:.4f}\n")
+        f.write(f"  Final Validation Loss: {history['val_loss'][-1]:.4f}\n")
+        f.write(f"  Overfitting Gap: {(history['train_acc'][-1] - history['val_acc'][-1]):.2f}%\n\n")
+        f.write(f"Files Generated:\n")
+        f.write(f"  - Best model: best_model_{run_name}.pth\n")
+        f.write(f"  - History: history_{run_name}.json\n")
+        f.write(f"  - Plots: training_history_{run_name}.png\n")
+        f.write(f"  - TensorBoard logs: {os.path.join(args.log_dir, run_name)}\n")
+    logger.info(f"Training summary saved to: {summary_path}")
+    
+    # Flush and close writer
+    writer.flush()
     writer.close()
+    logger.info("TensorBoard writer closed successfully")
     
-    print("\n" + "="*80)
-    print("Training completed!")
-    print(f"Best validation accuracy: {best_acc:.2f}%")
-    print(f"Model checkpoints saved in: {args.checkpoint_dir}")
-    print(f"TensorBoard logs saved in: {args.log_dir}")
-    print("="*80)
+    logger.info("\n" + "="*80)
+    logger.info("Training completed!")
+    logger.info(f"Best validation accuracy: {best_acc:.2f}%")
+    logger.info(f"Model checkpoints saved in: {args.checkpoint_dir}")
+    logger.info(f"TensorBoard logs saved in: {args.log_dir}")
+    logger.info("="*80)
 
 
 if __name__ == '__main__':
