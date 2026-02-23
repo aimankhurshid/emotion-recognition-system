@@ -35,11 +35,31 @@ ENV/
 ehthumbs.db
 Thumbs.db
 
-# Project specific
-data/
-results/
+# Project specific - Large datasets
+data/train/
+data/val/
+data/test/
 demographics/
+
+# Model checkpoints (large files)
+*.pth
+results/**/*.pth
+results/experiments/*/checkpoints/*.pth
+results/phase1_laptop_benchmark/*.pth
+results/optimized_run/*.pth
+
+# TensorBoard event files (can be large)
+results/logs/**/events.out.tfevents.*
+
+# But keep: small result files for sync
+!results/**/*.json
+!results/**/*.txt
+!results/**/*.png
+!results/**/*.md
+
+# Training logs
 *.log
+results/**/*.log
 
 # OS specific
 .DS_Store
