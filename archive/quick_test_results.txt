@@ -1,0 +1,81 @@
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+============================================================
+Quick System Verification Test
+============================================================
+
+✓ Device: cpu
+
+✓ Loading sample dataset...
+Loaded 80 images for train split
+  Neutral: 10
+  Happy: 10
+  Sad: 10
+  Surprise: 10
+  Fear: 10
+  Disgust: 10
+  Anger: 10
+  Contempt: 10
+Loaded 24 images for val split
+  Neutral: 3
+  Happy: 3
+  Sad: 3
+  Surprise: 3
+  Fear: 3
+  Disgust: 3
+  Anger: 3
+  Contempt: 3
+Loaded 24 images for test split
+  Neutral: 3
+  Happy: 3
+  Sad: 3
+  Surprise: 3
+  Fear: 3
+  Disgust: 3
+  Anger: 3
+  Contempt: 3
+Class weights:
+  Class 0: 1.0000
+  Class 1: 1.0000
+  Class 2: 1.0000
+  Class 3: 1.0000
+  Class 4: 1.0000
+  Class 5: 1.0000
+  Class 6: 1.0000
+  Class 7: 1.0000
+  Training batches: 20
+  Validation batches: 6
+  Test batches: 6
+
+✓ Creating model (without pretrained weights for speed)...
+  Total parameters: 18,470,736
+
+✓ Setting up training...
+
+✓ Running quick training test (2 epochs)...
+Epoch 1/2 [Train]:   0%|          | 0/20 [00:00<?, ?it/s]/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+Epoch 1/2 [Train]:   0%|          | 0/20 [00:02<?, ?it/s, loss=2.0608, acc=25.00%]Epoch 1/2 [Train]:   5%|▌         | 1/20 [00:02<00:50,  2.65s/it, loss=2.0608, acc=25.00%]Epoch 1/2 [Train]:   5%|▌         | 1/20 [00:05<00:50,  2.65s/it, loss=2.0829, acc=12.50%]Epoch 1/2 [Train]:  10%|█         | 2/20 [00:05<00:46,  2.58s/it, loss=2.0829, acc=12.50%]Epoch 1/2 [Train]:  10%|█         | 2/20 [00:07<00:46,  2.58s/it, loss=2.0873, acc=16.67%]Epoch 1/2 [Train]:  15%|█▌        | 3/20 [00:07<00:44,  2.60s/it, loss=2.0873, acc=16.67%]Epoch 1/2 [Train]:  15%|█▌        | 3/20 [00:10<00:44,  2.60s/it, loss=2.0661, acc=18.75%]Epoch 1/2 [Train]:  20%|██        | 4/20 [00:10<00:40,  2.54s/it, loss=2.0661, acc=18.75%]Epoch 1/2 [Train]:  20%|██        | 4/20 [00:12<00:40,  2.54s/it, loss=2.0873, acc=15.00%]Epoch 1/2 [Train]:  25%|██▌       | 5/20 [00:12<00:37,  2.50s/it, loss=2.0873, acc=15.00%]Epoch 1/2 [Train]:  25%|██▌       | 5/20 [00:15<00:37,  2.50s/it, loss=2.0916, acc=12.50%]Epoch 1/2 [Train]:  30%|███       | 6/20 [00:15<00:34,  2.47s/it, loss=2.0916, acc=12.50%]Epoch 1/2 [Train]:  30%|███       | 6/20 [00:17<00:34,  2.47s/it, loss=2.0676, acc=14.29%]Epoch 1/2 [Train]:  35%|███▌      | 7/20 [00:17<00:32,  2.48s/it, loss=2.0676, acc=14.29%]Epoch 1/2 [Train]:  35%|███▌      | 7/20 [00:20<00:32,  2.48s/it, loss=2.0679, acc=12.50%]Epoch 1/2 [Train]:  40%|████      | 8/20 [00:20<00:29,  2.48s/it, loss=2.0679, acc=12.50%]Epoch 1/2 [Train]:  40%|████      | 8/20 [00:22<00:29,  2.48s/it, loss=2.0700, acc=11.11%]Epoch 1/2 [Train]:  45%|████▌     | 9/20 [00:22<00:27,  2.49s/it, loss=2.0700, acc=11.11%]Epoch 1/2 [Train]:  45%|████▌     | 9/20 [00:25<00:27,  2.49s/it, loss=2.0850, acc=10.00%]Epoch 1/2 [Train]:  50%|█████     | 10/20 [00:25<00:25,  2.50s/it, loss=2.0850, acc=10.00%]Epoch 1/2 [Train]:  50%|█████     | 10/20 [00:27<00:25,  2.50s/it, loss=2.0772, acc=9.09%] Epoch 1/2 [Train]:  55%|█████▌    | 11/20 [00:27<00:22,  2.48s/it, loss=2.0772, acc=9.09%]Epoch 1/2 [Train]:  55%|█████▌    | 11/20 [00:29<00:22,  2.48s/it, loss=2.0952, acc=8.33%]Epoch 1/2 [Train]:  60%|██████    | 12/20 [00:29<00:19,  2.46s/it, loss=2.0952, acc=8.33%]Epoch 1/2 [Train]:  60%|██████    | 12/20 [00:32<00:19,  2.46s/it, loss=2.0886, acc=9.62%]Epoch 1/2 [Train]:  65%|██████▌   | 13/20 [00:32<00:17,  2.45s/it, loss=2.0886, acc=9.62%]Epoch 1/2 [Train]:  65%|██████▌   | 13/20 [00:34<00:17,  2.45s/it, loss=2.0927, acc=8.93%]Epoch 1/2 [Train]:  70%|███████   | 14/20 [00:34<00:14,  2.46s/it, loss=2.0927, acc=8.93%]Epoch 1/2 [Train]:  70%|███████   | 14/20 [00:37<00:14,  2.46s/it, loss=2.0928, acc=11.67%]Epoch 1/2 [Train]:  75%|███████▌  | 15/20 [00:37<00:12,  2.46s/it, loss=2.0928, acc=11.67%]Epoch 1/2 [Train]:  75%|███████▌  | 15/20 [00:39<00:12,  2.46s/it, loss=2.0917, acc=10.94%]Epoch 1/2 [Train]:  80%|████████  | 16/20 [00:39<00:09,  2.47s/it, loss=2.0917, acc=10.94%]Epoch 1/2 [Train]:  80%|████████  | 16/20 [00:42<00:09,  2.47s/it, loss=2.0954, acc=10.29%]Epoch 1/2 [Train]:  85%|████████▌ | 17/20 [00:42<00:07,  2.45s/it, loss=2.0954, acc=10.29%]Epoch 1/2 [Train]:  85%|████████▌ | 17/20 [00:44<00:07,  2.45s/it, loss=2.0929, acc=9.72%] Epoch 1/2 [Train]:  90%|█████████ | 18/20 [00:44<00:04,  2.44s/it, loss=2.0929, acc=9.72%]Epoch 1/2 [Train]:  90%|█████████ | 18/20 [00:47<00:04,  2.44s/it, loss=2.1005, acc=10.53%]Epoch 1/2 [Train]:  95%|█████████▌| 19/20 [00:47<00:02,  2.45s/it, loss=2.1005, acc=10.53%]Epoch 1/2 [Train]:  95%|█████████▌| 19/20 [00:49<00:02,  2.45s/it, loss=2.0941, acc=12.50%]Epoch 1/2 [Train]: 100%|██████████| 20/20 [00:49<00:00,  2.44s/it, loss=2.0941, acc=12.50%]Epoch 1/2 [Train]: 100%|██████████| 20/20 [00:49<00:00,  2.48s/it, loss=2.0941, acc=12.50%]
+
+Epoch 1/2:
+  Train Loss: 2.0941, Train Acc: 12.50%
+  Val Loss: 2.0808, Val Acc: 12.50%
+Epoch 2/2 [Train]:   0%|          | 0/20 [00:00<?, ?it/s]Epoch 2/2 [Train]:   0%|          | 0/20 [00:02<?, ?it/s, loss=2.4082, acc=0.00%]Epoch 2/2 [Train]:   5%|▌         | 1/20 [00:02<00:46,  2.46s/it, loss=2.4082, acc=0.00%]Epoch 2/2 [Train]:   5%|▌         | 1/20 [00:04<00:46,  2.46s/it, loss=2.3118, acc=0.00%]Epoch 2/2 [Train]:  10%|█         | 2/20 [00:04<00:44,  2.47s/it, loss=2.3118, acc=0.00%]Epoch 2/2 [Train]:  10%|█         | 2/20 [00:07<00:44,  2.47s/it, loss=2.2684, acc=8.33%]Epoch 2/2 [Train]:  15%|█▌        | 3/20 [00:07<00:41,  2.46s/it, loss=2.2684, acc=8.33%]Epoch 2/2 [Train]:  15%|█▌        | 3/20 [00:09<00:41,  2.46s/it, loss=2.1756, acc=25.00%]Epoch 2/2 [Train]:  20%|██        | 4/20 [00:09<00:39,  2.47s/it, loss=2.1756, acc=25.00%]Epoch 2/2 [Train]:  20%|██        | 4/20 [00:12<00:39,  2.47s/it, loss=2.1736, acc=20.00%]Epoch 2/2 [Train]:  25%|██▌       | 5/20 [00:12<00:36,  2.45s/it, loss=2.1736, acc=20.00%]Epoch 2/2 [Train]:  25%|██▌       | 5/20 [00:14<00:36,  2.45s/it, loss=2.1472, acc=16.67%]Epoch 2/2 [Train]:  30%|███       | 6/20 [00:14<00:34,  2.47s/it, loss=2.1472, acc=16.67%]Epoch 2/2 [Train]:  30%|███       | 6/20 [00:17<00:34,  2.47s/it, loss=2.1098, acc=21.43%]Epoch 2/2 [Train]:  35%|███▌      | 7/20 [00:17<00:31,  2.46s/it, loss=2.1098, acc=21.43%]Epoch 2/2 [Train]:  35%|███▌      | 7/20 [00:19<00:31,  2.46s/it, loss=2.1340, acc=21.88%]Epoch 2/2 [Train]:  40%|████      | 8/20 [00:19<00:29,  2.44s/it, loss=2.1340, acc=21.88%]Epoch 2/2 [Train]:  40%|████      | 8/20 [00:22<00:29,  2.44s/it, loss=2.1358, acc=19.44%]Epoch 2/2 [Train]:  45%|████▌     | 9/20 [00:22<00:26,  2.43s/it, loss=2.1358, acc=19.44%]Epoch 2/2 [Train]:  45%|████▌     | 9/20 [00:24<00:26,  2.43s/it, loss=2.1435, acc=17.50%]Epoch 2/2 [Train]:  50%|█████     | 10/20 [00:24<00:24,  2.47s/it, loss=2.1435, acc=17.50%]Epoch 2/2 [Train]:  50%|█████     | 10/20 [00:27<00:24,  2.47s/it, loss=2.1387, acc=18.18%]Epoch 2/2 [Train]:  55%|█████▌    | 11/20 [00:27<00:22,  2.50s/it, loss=2.1387, acc=18.18%]Epoch 2/2 [Train]:  55%|█████▌    | 11/20 [00:29<00:22,  2.50s/it, loss=2.1483, acc=16.67%]Epoch 2/2 [Train]:  60%|██████    | 12/20 [00:29<00:20,  2.51s/it, loss=2.1483, acc=16.67%]Epoch 2/2 [Train]:  60%|██████    | 12/20 [00:32<00:20,  2.51s/it, loss=2.1494, acc=15.38%]Epoch 2/2 [Train]:  65%|██████▌   | 13/20 [00:32<00:17,  2.48s/it, loss=2.1494, acc=15.38%]Epoch 2/2 [Train]:  65%|██████▌   | 13/20 [00:34<00:17,  2.48s/it, loss=2.1432, acc=14.29%]Epoch 2/2 [Train]:  70%|███████   | 14/20 [00:34<00:14,  2.47s/it, loss=2.1432, acc=14.29%]Epoch 2/2 [Train]:  70%|███████   | 14/20 [00:37<00:14,  2.47s/it, loss=2.1411, acc=15.00%]Epoch 2/2 [Train]:  75%|███████▌  | 15/20 [00:37<00:12,  2.47s/it, loss=2.1411, acc=15.00%]Epoch 2/2 [Train]:  75%|███████▌  | 15/20 [00:39<00:12,  2.47s/it, loss=2.1403, acc=14.06%]Epoch 2/2 [Train]:  80%|████████  | 16/20 [00:39<00:09,  2.47s/it, loss=2.1403, acc=14.06%]Epoch 2/2 [Train]:  80%|████████  | 16/20 [00:41<00:09,  2.47s/it, loss=2.1395, acc=14.71%]Epoch 2/2 [Train]:  85%|████████▌ | 17/20 [00:41<00:07,  2.47s/it, loss=2.1395, acc=14.71%]Epoch 2/2 [Train]:  85%|████████▌ | 17/20 [00:44<00:07,  2.47s/it, loss=2.1412, acc=13.89%]Epoch 2/2 [Train]:  90%|█████████ | 18/20 [00:44<00:04,  2.45s/it, loss=2.1412, acc=13.89%]Epoch 2/2 [Train]:  90%|█████████ | 18/20 [00:46<00:04,  2.45s/it, loss=2.1385, acc=13.16%]Epoch 2/2 [Train]:  95%|█████████▌| 19/20 [00:46<00:02,  2.46s/it, loss=2.1385, acc=13.16%]Epoch 2/2 [Train]:  95%|█████████▌| 19/20 [00:49<00:02,  2.46s/it, loss=2.1387, acc=12.50%]Epoch 2/2 [Train]: 100%|██████████| 20/20 [00:49<00:00,  2.45s/it, loss=2.1387, acc=12.50%]Epoch 2/2 [Train]: 100%|██████████| 20/20 [00:49<00:00,  2.47s/it, loss=2.1387, acc=12.50%]
+
+Epoch 2/2:
+  Train Loss: 2.1387, Train Acc: 12.50%
+  Val Loss: 2.0820, Val Acc: 12.50%
+
+============================================================
+✅ QUICK TEST COMPLETE - SYSTEM IS WORKING!
+============================================================
+
+Next steps:
+1. Download real AffectNet+ dataset when you have time
+2. Run full training: python train.py --epochs 50
+3. Use pretrained weights for better performance
+
+Note: This test used synthetic data and no pretrained weights
+============================================================

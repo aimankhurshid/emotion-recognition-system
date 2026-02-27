@@ -1,0 +1,31 @@
+# Datasets
+data/
+AffectNet+/
+RAF-DB/
+OneDrive_1_2-27-2026/
+*.zip
+
+# Virtual Environments
+venv/
+venv_win/
+uni_env/
+
+# Python caching
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Results and logs
+results/
+results_rafdb/
+logs/
+tensorboard/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+*.code-workspace
