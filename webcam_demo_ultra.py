@@ -20,15 +20,48 @@ from models import get_model, EMOTION_LABELS
 from utils import get_transforms
 
 # ============================================================================
+<<<<<<< HEAD
 # CONFIGURATION
 # ============================================================================
 CAMERA_INDEX = 0  # Default camera
+=======
+# CONFIGURATION & DISCOVERY
+# ============================================================================
+def find_cameras():
+    available = []
+    print("🔍 Probing for cameras (0-4)...")
+    for i in range(5):
+        cap = cv2.VideoCapture(i)
+        if cap.isOpened():
+            ret, _ = cap.read()
+            if ret:
+                available.append(i)
+            cap.release()
+    return available
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--camera', type=str, default='0', help='Camera index or URL')
+args = parser.parse_args()
+
+# Try to parse numeric index, else use string
+try:
+    CAMERA_INDEX = int(args.camera)
+except:
+    CAMERA_INDEX = args.camera
+
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
 CAMERA_WIDTH = 1280  
 CAMERA_HEIGHT = 720
 TARGET_FPS = 30  
 DETECTION_SCALE = 0.5  
+<<<<<<< HEAD
 PROCESS_EVERY_N_FRAMES = 8  # Process emotion every 8 frames (every ~0.25s)
 DETECT_EVERY_N_FRAMES = 4  # Detect faces every 4 frames
+=======
+PROCESS_EVERY_N_FRAMES = 3  # Faster updates
+DETECT_EVERY_N_FRAMES = 2   # Faster detection
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
 USE_THREADING = True
 MAX_QUEUE_SIZE = 2  # Small queue to prevent lag
 
@@ -41,8 +74,13 @@ should_exit = False
 
 # Model setup
 print("📦 Loading model...")
+<<<<<<< HEAD
 model = get_model(model_type='full', num_classes=8, pretrained=False, backbone='efficientnet_b4', lstm_hidden=512)
 checkpoint_path = r"results\phase1_laptop_benchmark\best_model_full_efficientnet_b4_20260221_004807.pth"
+=======
+model = get_model(model_type='full', num_classes=8, pretrained=False, backbone='resnet50', lstm_hidden=256, use_projection=False)
+checkpoint_path = r"results\demo_checkpoint\best_model_full_resnet50_20260213_122558.pth"
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
 print(f"Loading checkpoint from: {checkpoint_path}")
 checkpoint = torch.load(checkpoint_path, map_location='cpu')
 if 'model_state_dict' in checkpoint:
@@ -144,6 +182,7 @@ def predict_emotion_fast(face_img):
         # Inference
         output = model(input_tensor)
         probs = torch.softmax(output, dim=1)[0]
+<<<<<<< HEAD
         pred_idx = output.argmax(1).item()
         
         emotion = emotions[pred_idx]
@@ -152,6 +191,33 @@ def predict_emotion_fast(face_img):
     except Exception as e:
         print(f"❌ Error in prediction: {e}")
         return 'Neutral', 0.5
+=======
+        
+        # SENSITIVITY CALIBRATION: Reduce "Neutral" dominance
+        boosted_probs = probs.clone()
+        
+        # 1. Heavily suppress Neutral (index 0) if other emotions have any signal
+        boosted_probs[0] *= 0.5
+        
+        # 2. Boost core expressions (Happy, Surprise, Angry, Sad)
+        # EMOTION_LABELS = ['Neutral', 'Happy', 'Sad', 'Surprise', 'Fear', 'Disgust', 'Anger', 'Contempt']
+        boosted_probs[1] *= 2.0  # Happy boost
+        boosted_probs[2] *= 1.5  # Sad boost
+        boosted_probs[3] *= 2.0  # Surprise boost
+        boosted_probs[6] *= 1.5  # Anger boost
+        
+        pred_idx = boosted_probs.argmax().item()
+        
+        emotion = emotions[pred_idx]
+        confidence = probs[pred_idx].item()
+        
+        # Return all probabilities for the dashboard
+        all_probs = {emotions[i]: probs[i].item() for i in range(len(emotions))}
+        return emotion, confidence, all_probs
+    except Exception as e:
+        print(f"❌ Error in prediction: {e}")
+        return 'Neutral', 0.5, {em: 0.0 for em in emotions}
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
 
 # ============================================================================
 # MAIN PROCESSING LOOP
@@ -159,6 +225,16 @@ def predict_emotion_fast(face_img):
 def main():
     global latest_frame, should_exit
     
+<<<<<<< HEAD
+=======
+    # 1. Show available cameras first
+    cams = find_cameras()
+    print(f"✅ ACCESSIBLE CAMERAS: {cams}")
+    print(f"🎬 USING CAMERA: {CAMERA_INDEX}")
+    if not cams and isinstance(CAMERA_INDEX, int):
+        print("⚠️ No local cameras detected. If using DroidCam IP, ensure URL is correct.")
+    
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
     print("\n" + "="*70)
     print("🚀 ULTRA-OPTIMIZED BI-LSTM EMOTION RECOGNITION")
     print("="*70)
@@ -193,6 +269,10 @@ def main():
     # Caching
     last_faces = []
     last_emotions = {}
+<<<<<<< HEAD
+=======
+    last_probs = {}
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
     
     # Main loop
     while not should_exit:
@@ -217,18 +297,36 @@ def main():
             fps_frame_count = 0
             fps_start_time = time.time()
         
+<<<<<<< HEAD
+=======
+        # Dashboard Background (Right Side)
+        dash_w = 320
+        cv2.rectangle(frame, (frame.shape[1]-dash_w, 0), (frame.shape[1], frame.shape[0]), (30, 30, 30), -1)
+        cv2.putText(frame, "EMOTION LOGIC ENGINE", (frame.shape[1]-dash_w+20, 50), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+        
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
         # Face detection (throttled)
         if frame_count % DETECT_EVERY_N_FRAMES == 0:
             # Aggressive downsampling
             small = cv2.resize(frame, None, fx=DETECTION_SCALE, fy=DETECTION_SCALE)
             gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
             
+<<<<<<< HEAD
             # Ultra-fast detection
             faces_small = face_cascade.detectMultiScale(
                 gray, 
                 scaleFactor=1.4,  # Very fast
                 minNeighbors=2,   # Very fast (less accuracy, more speed)
                 minSize=(15, 15),
+=======
+            # Higher quality detection
+            faces_small = face_cascade.detectMultiScale(
+                gray, 
+                scaleFactor=1.1,  # More accurate
+                minNeighbors=5,   # More stable
+                minSize=(30, 30),
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
                 flags=cv2.CASCADE_SCALE_IMAGE
             )
             
@@ -239,6 +337,7 @@ def main():
         
         # Process faces
         for face_idx, (x, y, w, h) in enumerate(last_faces):
+<<<<<<< HEAD
             # Extract face ROI
             face_img = frame[max(0,y):y+h, max(0,x):x+w]
             if face_img.size == 0:
@@ -250,6 +349,81 @@ def main():
                 last_emotions[face_idx] = (emotion, conf)
             else:
                 emotion, conf = last_emotions.get(face_idx, ('Neutral', 0.5))
+=======
+            # 1. PADDED CROP: Add 25% margin to see eyebrows/chin better
+            pad_h = int(h * 0.25)
+            pad_w = int(w * 0.25)
+            
+            y1, y2 = max(0, y - pad_h), min(frame.shape[0], y + h + pad_h)
+            x1, x2 = max(0, x - pad_w), min(frame.shape[1], x + w + pad_w)
+            
+            face_img = frame[y1:y2, x1:x2]
+            if face_img.size == 0:
+                continue
+            
+            # 2. CONTRAST ENHANCEMENT (CLAHE): Helps with poor webcam lighting
+            try:
+                lab = cv2.cvtColor(face_img, cv2.COLOR_BGR2LAB)
+                l, a, b = cv2.split(lab)
+                clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+                cl = clahe.apply(l)
+                limg = cv2.merge((cl,a,b))
+                face_img = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+            except:
+                pass # Fallback to raw if CLAHE fails
+            
+            # Emotion prediction (throttled)
+            if frame_count % PROCESS_EVERY_N_FRAMES == 0:
+                emotion, conf, probs_dict = predict_emotion_fast(face_img)
+                # TEMPORAL SMOOTHING: Blend with last probabilities to prevent flickering
+                if face_idx in last_probs:
+                    alpha = 0.6 # 60% new frame, 40% history
+                    for k in probs_dict:
+                        probs_dict[k] = alpha * probs_dict[k] + (1-alpha) * last_probs[face_idx].get(k, 0)
+                    
+                    # Re-calculate best after smoothing
+                    # Suppress Neutral again in the smoothed pool
+                    smooth_boosted = {k: v * (0.5 if k == 'Neutral' else 1.0) for k, v in probs_dict.items()}
+                    # Specific boosts for demo
+                    smooth_boosted['Happy'] *= 2.0
+                    smooth_boosted['Surprise'] *= 2.5
+                    smooth_boosted['Anger'] *= 1.5
+                    
+                    emotion = max(smooth_boosted, key=smooth_boosted.get)
+                    conf = probs_dict[emotion]
+                
+                last_emotions[face_idx] = (emotion, conf)
+                last_probs[face_idx] = probs_dict
+            else:
+                emotion, conf = last_emotions.get(face_idx, ('Neutral', 0.5))
+                probs_dict = last_probs.get(face_idx, {em: 0.0 for em in emotions})
+            
+            # Draw Probabilities on Dashboard (for first face)
+            if face_idx == 0:
+                for i, (em_name, em_prob) in enumerate(probs_dict.items()):
+                    y_pos = 120 + (i * 45)
+                    bar_max_w = 200
+                    current_bar_w = int(bar_max_w * em_prob)
+                    
+                    # Highlight active or high-confidence emotions
+                    is_current = (em_name == emotion)
+                    t_color = emotion_colors.get(em_name, (200, 200, 200))
+                    
+                    # If very low probability, dim it
+                    display_color = t_color if (em_prob > 0.1 or is_current) else (60, 60, 60)
+                    
+                    cv2.putText(frame, em_name, (frame.shape[1]-dash_w+15, y_pos), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, display_color, 2 if is_current else 1)
+                    
+                    # Bar
+                    cv2.rectangle(frame, (frame.shape[1]-220, y_pos-12), (frame.shape[1]-20, y_pos+3), (40, 40, 40), -1)
+                    if em_prob > 0:
+                        cv2.rectangle(frame, (frame.shape[1]-220, y_pos-12), (frame.shape[1]-220+current_bar_w, y_pos+3), t_color, -1)
+                    
+                    # Percentage
+                    cv2.putText(frame, f"{int(em_prob*100)}%", (frame.shape[1]-55, y_pos), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
             
             color = emotion_colors.get(emotion, (255, 255, 255))
             logic = circuit_logic.get(emotion, "")

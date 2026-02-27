@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Python
 __pycache__/
 *.py[cod]
@@ -65,3 +66,36 @@ results/**/*.log
 .DS_Store
 .DS_Store?
 ._*
+=======
+# Datasets
+data/
+AffectNet+/
+RAF-DB/
+OneDrive_1_2-27-2026/
+*.zip
+
+# Virtual Environments
+venv/
+venv_win/
+uni_env/
+
+# Python caching
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Results and logs
+results/
+results_rafdb/
+logs/
+tensorboard/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+*.code-workspace
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861

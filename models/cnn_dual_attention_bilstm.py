@@ -17,11 +17,19 @@ class BiLSTMDualAttention(nn.Module):
     - Classification head
     """
     def __init__(self, num_classes=8, backbone='efficientnet_b4', pretrained=True, 
+<<<<<<< HEAD
                  lstm_hidden=256, lstm_layers=2, dropout=0.5):
+=======
+                 lstm_hidden=256, lstm_layers=2, dropout=0.5, use_projection=True):
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
         super(BiLSTMDualAttention, self).__init__()
         
         self.num_classes = num_classes
         self.backbone_name = backbone
+<<<<<<< HEAD
+=======
+        self.use_projection = use_projection
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
         
         if backbone == 'efficientnet_b4':
             efficientnet = models.efficientnet_b4(pretrained=pretrained)
@@ -38,6 +46,7 @@ class BiLSTMDualAttention(nn.Module):
         
         self.adaptive_pool = nn.AdaptiveAvgPool2d((4, 4))  # 4x4=16 timesteps (was 7x7=49)
         
+<<<<<<< HEAD
         # Project high-dim features down before LSTM (1792 -> 512)
         self.feature_projection = nn.Sequential(
             nn.Linear(feature_dim, 512),
@@ -46,6 +55,20 @@ class BiLSTMDualAttention(nn.Module):
         )
         
         lstm_input_size = 512  # Projected dimension
+=======
+        if use_projection:
+            # Project high-dim features down before LSTM (1792 -> 512)
+            self.feature_projection = nn.Sequential(
+                nn.Linear(feature_dim, 512),
+                nn.ReLU(inplace=True),
+                nn.Dropout(dropout * 0.5)
+            )
+            lstm_input_size = 512
+        else:
+            self.feature_projection = nn.Identity()
+            lstm_input_size = feature_dim
+        
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
         self.lstm = nn.LSTM(
             input_size=lstm_input_size,
             hidden_size=lstm_hidden,

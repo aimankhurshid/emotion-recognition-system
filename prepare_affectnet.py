@@ -28,8 +28,13 @@ import shutil
 from pathlib import Path
 
 # ─────────────────────────── CONFIGURE THESE ──────────────────────────────────
+<<<<<<< HEAD
 AFFECTNET_ROOT = r"E:\AffectNet\AffectNet+\human_annotated"
 PROJECT_DATA   = r"C:\Users\Naman\emotion-recognition-system\data"
+=======
+AFFECTNET_ROOT = r"c:\Users\Admin\Documents\ayem\AffectNet+\human_annotated"
+PROJECT_DATA   = r"c:\Users\Admin\Documents\ayem\data"
+>>>>>>> b84b3a84a7bc57632fbec1c421171f80e3049861
 VAL_TEST_SPLIT = 0.5   # 50% of validation_set → test, 50% → val
 RANDOM_SEED    = 42
 USE_HARDLINKS  = True  # False = copy files (uses more space but works cross-drive)
